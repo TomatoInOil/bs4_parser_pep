@@ -1,12 +1,20 @@
 # Проект парсинга python.org
 ## Оглавление
 1. [Описание](https://github.com/TomatoInOil/bs4_parser_pep#описание)
-2. [Как развернуть проект?](https://github.com/TomatoInOil/bs4_parser_pep#как-развернуть-проект)
-3. [Доступные команды](https://github.com/TomatoInOil/bs4_parser_pep#доступные-команды)
+2. [Используемые технологии](https://github.com/TomatoInOil/bs4_parser_pep#используемые-технологии)
+3. [Как развернуть проект?](https://github.com/TomatoInOil/bs4_parser_pep#как-развернуть-проект)
+4. [Доступные команды](https://github.com/TomatoInOil/bs4_parser_pep#доступные-команды)
     1. [Примеры команд](https://github.com/TomatoInOil/bs4_parser_pep#примеры-команд)
-4. [Автор](https://github.com/TomatoInOil/bs4_parser_pep#автор)
+5. [Автор](https://github.com/TomatoInOil/bs4_parser_pep#автор)
 ## Описание
 Парсер включает в себя несколько функций, описанных в разделе "Доступные команды", направленных на сбор информации с официальных поддоменов `*.python.org`.
+## Используемые технологии
+- `Python`
+- `beautifulsoup4`
+- `lxml`
+- `requests-cache` - библиотека кеширования запросов для стандартной библиотеки `request`
+- `tqdm` - добавление progress-bar
+- `prettytable` - красивый вывод таблиц в терминал
 ## Как развернуть проект?
 Склонировать репозиторий 
 ```BASH
@@ -71,4 +79,4 @@ python main.py download
 python main.py -с -o file pep
 ```
 ## Автор
-Проект выполнен в рамках учебы в Яндекс.Практикум [Паутовым Даниилом](https://github.com/TomatoInOil) =^..^=______/
+Проект выполнен в рамках учебы в Яндекс.Практикум [Даниилом Паутовым](https://github.com/TomatoInOil) =^..^=______/
