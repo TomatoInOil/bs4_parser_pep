@@ -7,12 +7,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import (
-    BASE_DIR,
-    EXPECTED_STATUS,
-    MAIN_DOC_URL,
-    MAIN_PEPS_URL,
-)
+from constants import BASE_DIR, EXPECTED_STATUS, MAIN_DOC_URL, MAIN_PEPS_URL
 from outputs import control_output
 from utils import (
     find_next_sibling_tag,
@@ -159,7 +154,9 @@ def pep(session):
             status_count[status_f_card] = 1
 
     results = [("Статус", "Количество")]
-    list_of_counted_statuses = sorted(status_count.items(), key=lambda x: -x[1])
+    list_of_counted_statuses = sorted(
+        status_count.items(), key=lambda x: -x[1]
+    )
     results.extend(list_of_counted_statuses)
     results.append(("Total", len(rows)))
     return results
