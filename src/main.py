@@ -7,9 +7,19 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, MAIN_DOC_URL
+from constants import (
+    BASE_DIR,
+    EXPECTED_STATUS,
+    MAIN_DOC_URL,
+    MAIN_PEPS_URL,
+)
 from outputs import control_output
-from utils import get_response, find_tag
+from utils import (
+    find_next_sibling_tag,
+    find_tag,
+    find_tag_by_string,
+    get_response,
+)
 
 
 def whats_new(session):
@@ -18,7 +28,6 @@ def whats_new(session):
     response = get_response(session, whats_new_url)
     if response is None:
         return
-
     soup = BeautifulSoup(response.text, features="lxml")
 
     main_div = find_tag(soup, "section", attrs={"id": "what-s-new-in-python"})
@@ -27,7 +36,7 @@ def whats_new(session):
         "li", attrs={"class": "toctree-l1"}
     )
 
-    results = [("Ссылка на статью", "Заголовок", "Редактор, автор")]
+    results = [("Ссылка на статью", "Заголовок", "Редактор, Автор")]
     translate_table = str.maketrans("", "", "\n")
     for section in tqdm(sections_by_python):
         version_a_tag = find_tag(section, "a")
@@ -49,7 +58,6 @@ def latest_versions(session):
     response = get_response(session, MAIN_DOC_URL)
     if response is None:
         return
-
     soup = BeautifulSoup(response.text, "lxml")
 
     sidebar = find_tag(soup, "div", attrs={"class": "sphinxsidebarwrapper"})
@@ -82,8 +90,8 @@ def download(session):
     response = get_response(session, downloads_url)
     if response is None:
         return
-
     soup = BeautifulSoup(response.text, "lxml")
+
     main_div = find_tag(soup, "div", attrs={"role": "main"})
     table_tag = find_tag(main_div, "table", attrs={"class": "docutils"})
 
@@ -102,10 +110,66 @@ def download(session):
     logging.info(f"Архив был загружен и сохранён: {archive_path}")
 
 
+def pep(session):
+    """Парсит информацию о статусах PEP."""
+    response = get_response(session, MAIN_PEPS_URL)
+    if response is None:
+        return
+    soup = BeautifulSoup(response.text, "lxml")
+
+    section_num_index = find_tag(
+        soup, "section", attrs={"id": "numerical-index"}
+    )
+    table = find_tag(section_num_index, "tbody")
+    rows = table.find_all("tr")
+    status_count = {}
+    for row in tqdm(rows):
+        status_abbr = find_tag(row, "abbr").text
+        try:
+            status_f_table = EXPECTED_STATUS[status_abbr[1:]]
+        except KeyError:
+            logging.exception(
+                f"Аббревиатура {status_abbr} не соответствует"
+                " ни одному из ожидаемых статусов.",
+                stack_info=True,
+            )
+        link = urljoin(MAIN_PEPS_URL, find_tag(row, "a")["href"])
+
+        card_response = get_response(session, link)
+        if response is None:
+            return
+        card_soup = BeautifulSoup(card_response.text, "lxml")
+
+        pep_content = find_tag(
+            card_soup, "section", attrs={"id": "pep-content"}
+        )
+        dl = find_tag(pep_content, "dl")
+        status_dt = find_tag_by_string(dl, string=re.compile(r"^Status$"))
+        status_dd = find_next_sibling_tag(status_dt, "dd")
+        status_f_card = status_dd.text
+        if status_f_card not in status_f_table:
+            logging.warning(
+                f"Несовпадающий статус для {link}\n"
+                f"Статус в карточке: {status_f_card}\n"
+                f"Ожидаемые статусы: {status_f_table}"
+            )
+        if status_f_card in status_count:
+            status_count[status_f_card] += 1
+        else:
+            status_count[status_f_card] = 1
+
+    results = [("Статус", "Количество")]
+    list_of_counted_statuses = sorted(status_count.items(), key=lambda x: -x[1])
+    results.extend(list_of_counted_statuses)
+    results.append(("Total", len(rows)))
+    return results
+
+
 MODE_TO_FUNCTION = {
     "whats-new": whats_new,
     "latest-versions": latest_versions,
     "download": download,
+    "pep": pep,
 }
 
 
